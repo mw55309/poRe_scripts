@@ -1,0 +1,29 @@
+#!/usr/bin/env Rscript
+
+# get command line arguments as an array
+args <- commandArgs(trailingOnly = TRUE)
+
+# if we don't have any command line arguments
+# print out usage
+if (length(args) == 0) {
+        stop("Please provide a directory containing fast5 files as the first (and only) argument")
+}
+
+# the first argument is the directory, stop if it doesn't exist
+my.dir <- args[1]
+if (! file.exists(my.dir)) {
+        stop(paste(my.dir, " does not exist"))
+}
+
+# get a list of all of the files with a .fast5 file name extension
+f5files <- dir(path = my.dir, pattern = "\\.fast5$", full.names = TRUE)
+
+# print to STDERR how many files we are going to attempt
+write(paste("Extracting complement fastq from", length(f5files), "files"), stderr())
+
+# load poRe
+suppressMessages(library(poRe))
+
+# apply printfastq to every entry in f5files
+# printfastq tests for 2D fastq and if found prints to STDOUT
+invisible(apply(array(f5files), 1, printfastq, f5path = "/Analyses/Basecall_1D_000/BaseCalled_complement"))
