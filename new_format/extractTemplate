@@ -26,4 +26,4 @@ suppressMessages(library(poRe))
 
 # apply printfastq to every entry in f5files
 # printfastq tests for 2D fastq and if found prints to STDOUT
-invisible(apply(array(f5files), 1, printfastq, f5path = "/Analyses/Basecall_1D_000/BaseCalled_template"))
+invisible(apply(array(f5files), 1, printfastq, f5path = "/Analyses/Basecall_1D_000/BaseCalled_template/"))
