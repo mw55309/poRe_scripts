@@ -1,0 +1,30 @@
+#!/usr/bin/env perl
+
+my $q = shift;
+
+unless (-f $q) {
+        print "Convert poRe FASTQ to FASTA.  Output goes to STDOUT\n";
+        print "USAGE: porefq2fa <path to fastq file>\n";
+        exit(0);
+
+        #exit(0);
+}
+
+my $cat = "cat";
+if ($q =~ m/\.gz/) {
+        $cat = "zcat";
+}
+
+open(IN, "$cat $q \| paste - - - - |") || die "Unable to open $q\n";
+while(<IN>) {
+        chomp();
+        my ($id,$seq,$plus,$qual) = split(/\t/);
+
+        my ($seqid, $file) = split(/\s+/, $id);
+        my ($fname, $path) = split(/:/, $file);
+
+        print ">$seqid $fname $path\n$seq\n";
+}
+
+close IN;
+
