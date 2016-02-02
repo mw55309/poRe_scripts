@@ -22,6 +22,8 @@ while(<IN>) {
 
         my ($seqid, $file) = split(/\s+/, $id);
         my ($fname, $path) = split(/:/, $file);
+        
+        $seqid =~ s/^\@//;
 
         print ">$seqid $fname $path\n$seq\n";
 }
