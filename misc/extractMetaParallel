@@ -1,0 +1,44 @@
+#!/usr/bin/env Rscript
+
+# get command line arguments as an array
+args <- commandArgs(trailingOnly = TRUE)
+
+# if we don't have any command line arguments
+# print out usage
+if (length(args) == 0) {
+        stop("Please provide a directory containing fast5 files as the first (and only) argument")
+}
+
+# the first argument is the directory, stop if it doesn't exist
+my.dir <- args[1]
+if (! file.exists(my.dir)) {
+        stop(paste(my.dir, " does not exist"))
+}
+
+# get a list of all of the files with a .fast5 file name extension
+f5files <- dir(path = my.dir, pattern = "\\.fast5$", full.names = TRUE)
+
+# print to STDERR how many files we are going to attempt
+write(paste("Extracting metadata from", length(f5files), "files"), stderr())
+
+path.t <- "/Analyses/Basecall_2D_000/"
+path.c <- path.t
+path2d <- path.t
+
+
+suppressMessages(library(parallel))
+suppressMessages(library(poRe))
+
+cl <- makeCluster(4)
+ 
+clusterExport(cl, "f5files")
+c <- clusterEvalQ(cl, suppressMessages(library(poRe)))
+l <- parLapply(cl, 
+          f5files, 
+          get_meta_info, path2d, path.t, path.c)
+stopCluster(cl)
+
+m <- matrix(unlist(l), ncol=12, byrow=TRUE)
+colnames(m) <- c("filename","channel_num","read_num","read_start_time","status","tlen","clen","len2d","run_id","read_id","barcode","exp_start")
+
+write.table(m, "", sep="\t", row.names=FALSE, col.names=TRUE, quote=FALSE)

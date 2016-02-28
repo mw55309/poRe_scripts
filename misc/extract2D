@@ -1,0 +1,49 @@
+#!/usr/bin/env Rscript
+
+# get command line arguments as an array
+args <- commandArgs(trailingOnly = TRUE)
+
+# if we don't have any command line arguments
+# print out usage
+if (length(args) == 0) {
+        stop("Please provide a directory containing fast5 files as the first (and only) argument")
+}
+
+# the first argument is the directory, stop if it doesn't exist
+my.dir <- args[1]
+if (! file.exists(my.dir)) {
+        stop(paste(my.dir, " does not exist"))
+}
+
+# get a list of all of the files with a .fast5 file name extension
+f5files <- dir(path = my.dir, pattern = "\\.fast5$", full.names = TRUE)
+
+# print to STDERR how many files we are going to attempt
+write(paste("Extracting 2D fastq from", length(f5files), "files"), stderr())
+
+# load poRe
+suppressWarnings(suppressMessages(library(poRe)))
+
+printfastq <- function (f5, f5path = "/Analyses/Basecall_2D_000/BaseCalled_2D/")
+{
+    fid = tryCatch({
+        H5Fopen(f5)
+    }, warning = function(w) w, error = function(e) e)
+    if (typeof(fid) == "S4" && H5Lexists(fid, f5path)) {
+        did <- H5Dopen(fid, paste(f5path, "Fastq", sep = ""))
+        fq <- (H5Dread(did))
+        four <- strsplit(fq, "\n")[[1]]
+        fq <- paste(paste(four[1], f5, sep = " "), four[2], four[3],
+            four[4], sep = "\n")
+        cat(fq, file = "", sep = "\n", fill = FALSE, append=TRUE)
+        H5Dclose(did)
+    }
+    if (typeof(fid) == "S4") {
+        H5Fclose(fid)
+    }
+}
+
+
+# apply printfastq to every entry in f5files
+# printfastq tests for 2D fastq and if found prints to STDOUT
+invisible(apply(array(f5files), 1, printfastq))
