@@ -6,7 +6,7 @@ args <- commandArgs(trailingOnly = TRUE)
 # if we don't have any command line arguments
 # print out usage
 if (length(args) == 0) {
-        stop("Please provide a directory containing fast5 files as the first (and only) argument")
+        stop("Usage: extract2DParallel dir_of_fast5_files output.fastq num_cores")
 }
 
 # the first argument is the directory, stop if it doesn't exist
