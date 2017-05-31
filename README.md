@@ -14,6 +14,7 @@ extractMeta -h
 ```
 
 Requires: poRe (http://sourceforge.net/p/rpore/wiki/Home/)
+
 Requires: optparse
 
 Comments: mick.watson@roslin.ed.ac.uk
