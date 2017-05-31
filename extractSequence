@@ -1,0 +1,64 @@
+#!/usr/bin/env Rscript
+
+suppressPackageStartupMessages(library("optparse"))
+
+option_list <- list(
+ make_option(c("-t", "--type"), default="fastq",
+ help="Extract fastq (default) or fasta"),
+ make_option(c("-s", "--seqtype"), default="template",
+ help="Extract template (default), complement or 2D"),
+ make_option(c("-c", "--cores"), type="integer", default=1,
+ help="Number of cores to use for parallelisation"),
+ make_option(c("-o", "--out"), default="extract.out",
+ help="File to extract reads to")
+ )
+
+parser <- OptionParser(usage = "%prog [options] dir_of_fast5", option_list=option_list)
+
+arguments <- parse_args(parser, positional_arguments = 1)
+
+opt <- arguments$options
+dir <- arguments$args
+
+if (! file.exists(dir)) {
+	stop(sprintf("Specified directory ( %s ) does not exist", dir))
+}
+
+if (opt$out == "extract.out") {
+	stop("Please specify an output file using -o/--out")
+}
+
+if (file.exists(opt$out)) {
+	stop(sprintf("%s exists - this script uses append, therefore this is not recommended", opt$out))
+}
+
+write(sprintf("type:  %s", opt$type), stderr())
+write(sprintf("seq:   %s", opt$seqtype), stderr())
+write(sprintf("cores: %i", opt$cores), stderr())
+
+suppressMessages(library(poRe))
+
+f5files <- list.files(path = dir, pattern = "\\.fast5$", full.names = TRUE, recursive = TRUE)
+
+write(sprintf("Extracting %s %s from %i files", opt$seqtype, opt$type, length(f5files)), stderr())
+
+print.func <- printfastq
+if (opt$type == "fasta") {
+	print.func <- printfasta
+}
+
+if (opt$cores==1) {
+	invisible(apply(array(f5files), 1, print.func, type=opt$seqtype, out=opt$out))
+} else {
+	suppressMessages(suppressWarnings(library(parallel)))
+
+	cl <- makeCluster(opt$cores)
+
+	clusterExport(cl, "f5files")
+	c <- clusterEvalQ(cl, suppressWarnings(suppressMessages(library(poRe))))
+	#clusterExport(cl, opt)
+	#clusterExport(cl, print.func)
+		
+	l <- parApply(cl, array(f5files), 1, print.func, type=opt$seqtype, out=opt$out)
+	stopCluster(cl)
+}

@@ -1,0 +1,55 @@
+#!/usr/bin/env Rscript
+
+suppressPackageStartupMessages(library("optparse"))
+
+option_list <- list(
+ make_option(c("-c", "--cores"), type="integer", default=1,
+ help="Number of cores to use for parallelisation")
+ )
+
+parser <- OptionParser(usage = "%prog [options] dir_of_fast5", option_list=option_list)
+
+arguments <- parse_args(parser, positional_arguments = 1)
+
+opt <- arguments$options
+dir <- arguments$args
+
+if (! file.exists(dir)) {
+	stop(sprintf("Specified directory ( %s ) does not exist", dir))
+}
+
+write(sprintf("seq:   %s", opt$seqtype), stderr())
+
+suppressMessages(library(poRe))
+
+f5files <- list.files(path = dir, pattern = "\\.fast5$", full.names = TRUE, recursive = TRUE)
+
+write(sprintf("Extracting metadata from %i files", length(f5files)), stderr())
+
+
+if (opt$cores==1) {
+	out <- read.meta.info(dir)
+	write.table(out, "", sep="\t", row.names=FALSE, col.names=TRUE, quote=FALSE)
+} else {
+	suppressMessages(suppressWarnings(library(parallel)))
+
+	cl <- makeCluster(opt$cores)
+
+	clusterExport(cl, "f5files")
+	c <- clusterEvalQ(cl, suppressWarnings(suppressMessages(library(poRe))))
+	
+	l <- parLapply(cl,
+          f5files,
+          get_meta_info)
+	stopCluster(cl)	
+
+	m <- matrix(unlist(l), ncol=12, byrow=TRUE)
+	colnames(m) <- c("filename","channel_num","read_num","read_start_time","status","tlen","clen","len2d","run_id","read_id","barcode","exp_start")
+
+	m[,6][is.na(m[,6])] <- 0
+	m[,7][is.na(m[,7])] <- 0
+	m[,8][is.na(m[,8])] <- 0
+
+	write.table(m, "", sep="\t", row.names=FALSE, col.names=TRUE, quote=FALSE)
+	
+}
