@@ -1,16 +1,19 @@
 # poRe_scripts
 Linux command line scripts to be used with poRe
 
-Directory old_format refers to FAST5 format used before mid November 2015
+* previous scripts moved to legacy
 
-Directory new_format refers to FAST5 format used after mid November 2015
+Run with -h to see options
 
-All scripts take a single argument - the path to a directory containing FAST5 files
+```sh
+extractSequence -h
+```
 
-All scripts spit out FASTQ to STDOUT and a brief message to STDERR
-
-Script names are self-explanatory ;-)
+```
+extractMeta -h
+```
 
 Requires: poRe (http://sourceforge.net/p/rpore/wiki/Home/)
+Requires: optparse
 
 Comments: mick.watson@roslin.ed.ac.uk
